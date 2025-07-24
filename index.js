@@ -13,11 +13,12 @@ app.post("/", async (req, res) => {
   try {
     const data = req.body;
 
-    // 1. Отправляем контакт
+    // Создание контакта
     const contactPayload = {
       fields: {
         NAME: data.name || "",
         PHONE: [{ VALUE: data.phone || "", VALUE_TYPE: "WORK" }],
+        SOURCE_ID: "REPEAT_SALE", // Источник: Повторная продажа
       },
     };
 
@@ -28,18 +29,22 @@ app.post("/", async (req, res) => {
 
     const contactId = contactResponse.data.result;
 
-    // 2. Отправляем сделку, привязанную к контакту
+    // Создание сделки
     const dealPayload = {
       fields: {
         TITLE: "Заявка с Tilda",
         CONTACT_ID: contactId,
+        SOURCE_ID: "REPEAT_SALE",
         UF_CRM_1753266032459: data.UF_CRM_1753266032459 || "",
         UF_CRM_1753266055460: data.UF_CRM_1753266055460 || "",
         UF_CRM_1753266077847: data.UF_CRM_1753266077847 || "",
       },
     };
 
-    const dealResponse = await axios.post(process.env.WEBHOOK_URL, dealPayload);
+    const dealResponse = await axios.post(
+      process.env.WEBHOOK_URL,
+      dealPayload
+    );
 
     res.status(200).send({
       success: true,
@@ -47,6 +52,7 @@ app.post("/", async (req, res) => {
       deal: dealResponse.data,
     });
   } catch (error) {
+    console.error("Error:", error.response?.data || error.message);
     res.status(500).send({ success: false, error: error.message });
   }
 });
